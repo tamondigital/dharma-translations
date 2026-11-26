@@ -1,0 +1,8 @@
+---
+import type { Part } from "../lib/data";
+// A text with its citations linked to the teacher's transcript and its glossary terms marked.
+const { parts } = Astro.props as { parts: Part[] };
+---
+{parts.map((p) => p.term
+  ? <a class="term" href={`#gl-${p.term}`} data-term={p.term}>{p.t}</a>
+  : p.href ? <a href={p.href}>{p.t}</a> : p.t)}

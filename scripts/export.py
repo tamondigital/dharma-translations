@@ -4,11 +4,15 @@
 Reads (never writes) <mani>/reference/translation/provisional/:
   <T-id>.tsv                         seg · zh · en · basis · flags
   <T-id>.meta.json                   lectures + sections
+  <T-id>.glossary.tsv                the reader's guide and term notes (id · kind · zh · term · sense · defined ·
+                                     teacher · cite · flags); a row is certified under its id, h = sha1 of
+                                     term..flags joined by tabs
   review/<T-id>/certification.json   {seg: {status, note, h, at}}, h = sha1(en)[:10]
   METHOD.md
 
 Writes content/ (committed, deployed). A text is exported only when every segment is certified and every
 mark's hash matches the current English: an uncertified or changed line keeps the whole text off the site.
+A glossary or guide row is exported only when it is certified and unchanged; the rest are left out.
 --preview writes every text to content-preview/ (gitignored) for `npm run preview:dev`; it never touches content/.
 A text needs an entry in site.config.json `texts` (slug, English title) to be exported at all.
 """
@@ -25,7 +29,9 @@ CFG = json.loads((ROOT / "site.config.json").read_text(encoding="utf-8"))
 MANI = (ROOT / CFG["mani"]).resolve()
 PROV = MANI / "reference" / "translation" / "provisional"
 CITE = re.compile(r"(?<![\d–-])(\d{2}) 行(\d+(?:[–-]\d+)?(?:, \d+(?:[–-]\d+)?)*)")
-LESSON_NO = re.compile(r"(\d{2})\) 學習筆記\.md$")
+LESSON_NO = re.compile(r"(\d{2})\D*學習筆記\.md$")
+TID = re.compile(r"^T\d{4}[A-Za-z]?$")
+GLOSSARY_COLS = ["id", "kind", "zh", "term", "sense", "defined", "teacher", "cite", "flags"]
 
 
 def en_hash(en: str) -> str:
@@ -75,6 +81,42 @@ def basis_parts(basis: str, lecture: dict | None, noted: set[str]) -> list[dict]
     return out
 
 
+def read_glossary(tid: str) -> list[dict]:
+    p = PROV / f"{tid}.glossary.tsv"
+    out = []
+    for line in (p.read_text(encoding="utf-8").splitlines() if p.is_file() else []):
+        if line.startswith("#") or line.startswith("id\t") or not line.strip():
+            continue
+        c = line.split("\t")
+        c += [""] * (len(GLOSSARY_COLS) - len(c))
+        out.append(dict(zip(GLOSSARY_COLS, c), h=en_hash("\t".join(c[3:9]))))
+    return out
+
+
+def attach_terms(segs: list[dict], terms: list[dict]) -> None:
+    """Each segment gets en_parts [{t}, {t, term: id}]: a term's phrase is marked at its first occurrence in reading
+    order (a phrase already inside another term's mark is not marked again); the term records that segment."""
+    marks = {}
+    for g in terms:
+        for s in segs:
+            i = s["en"].find(g["term"])
+            taken = marks.get(s["id"], [])
+            if i >= 0 and all(i + len(g["term"]) <= a or i >= b for a, b, _ in taken):
+                marks.setdefault(s["id"], []).append((i, i + len(g["term"]), g["id"]))
+                g["first_seg"] = s["id"]
+                break
+    for s in segs:
+        parts, pos = [], 0
+        for a, b, gid in sorted(marks.get(s["id"], [])):
+            if a > pos:
+                parts.append({"t": s["en"][pos:a]})
+            parts.append({"t": s["en"][a:b], "term": gid})
+            pos = b
+        if pos < len(s["en"]):
+            parts.append({"t": s["en"][pos:]})
+        s["en_parts"] = parts
+
+
 def method_md(published: dict[str, str]) -> str:
     """METHOD.md with its repo-relative links resolved: a published text's .tsv → its page; anything else
     inside mani (private) → plain text."""
@@ -98,7 +140,7 @@ def export(preview: bool) -> int:
         shutil.rmtree(out)
     (out / "texts").mkdir(parents=True)
     index, published = [], {}
-    for tsv in sorted(PROV.glob("T*.tsv")):
+    for tsv in sorted(p for p in PROV.glob("T*.tsv") if TID.match(p.stem)):
         tid = tsv.stem
         site = CFG["texts"].get(tid)
         if not site:
@@ -122,6 +164,19 @@ def export(preview: bool) -> int:
         for s in segs:
             s["basis_parts"] = basis_parts(s["basis"], lecture, noted)
             s["flags_parts"] = basis_parts(s["flags"], lecture, noted)
+        rows = read_glossary(tid)
+        for g in rows:
+            c = certs.get(g["id"])
+            g["certified"] = bool(c and c.get("status") == "certified" and c.get("h") == g["h"])
+            g["teacher"] = [x.strip() for x in g["teacher"].split("¶") if x.strip()]
+            g["cite_parts"] = basis_parts(g["cite"], lecture, noted)
+            g["flags_parts"] = basis_parts(g["flags"], lecture, noted)
+            g["defined_first"] = (re.findall(r"[A-Z]\d{2}", g["defined"]) or [None])[0]
+        rows = [g for g in rows if g["certified"] or preview]
+        print(f"{tid}: {sum(g['certified'] for g in rows)} certified glossary/guide row(s) exported"
+              + (f", {sum(not g['certified'] for g in rows)} uncertified (preview)" if preview else ""))
+        terms = [g for g in rows if g["kind"] == "term"]
+        attach_terms(segs, terms)
         sections, by_start, cur = [], {x["start"]: x for x in meta.get("sections", [])}, None
         for s in segs:
             if s["id"] in by_start or cur is None:
@@ -134,6 +189,7 @@ def export(preview: bool) -> int:
             "id": tid, **site, "title_zh": title_zh, "lectures": meta.get("lectures", []),
             "certified": bool(complete), "certified_at": max(dates)[:10] if complete and dates else None,
             "n_segs": len(segs), "n_certified": n_cert, "sections": sections,
+            "guide": [g for g in rows if g["kind"] == "guide"], "glossary": terms,
             "tsv": tsv.read_text(encoding="utf-8"),
         }
         (out / "texts" / f"{tid}.json").write_text(json.dumps(text, ensure_ascii=False, indent=1), encoding="utf-8")
