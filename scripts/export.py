@@ -40,13 +40,14 @@ TID = re.compile(r"^T\d{4}[A-Za-z]?$")
 GLOSSARY_COLS = ["id", "kind", "zh", "term", "sense", "defined", "teacher", "cite", "flags"]
 
 
-def review_of(rid: str, h: str, certs: dict, ai: dict) -> str:
-    """"owner" | "ai" | "draft": the owner's mark outranks the AI reviewer's; a mark on other text does not count."""
+def review_of(rid: str, h: str, ah: str, certs: dict, ai: dict) -> str:
+    """"owner" | "ai" | "draft": the owner's mark (hash h) outranks the AI reviewer's (hash ah); a mark on other text
+    does not count."""
     c = certs.get(rid)
     if c and c.get("h") == h:
         return "owner" if c.get("status") == "certified" else "draft"
     v = ai.get(rid)
-    return "ai" if v and v.get("h") == h and v.get("verdict") == "pass" else "draft"
+    return "ai" if v and v.get("h") == ah and v.get("verdict") == "pass" else "draft"
 
 
 def read_tsv(p: Path) -> tuple[list[str], list[dict]]:
@@ -151,7 +152,7 @@ def export(preview: bool) -> int:
         load = lambda f: json.loads((rev / f).read_text(encoding="utf-8")) if (rev / f).is_file() else {}
         certs, ai = load("certification.json"), load("ai-review.json")
         for s in segs:
-            s["review"] = review_of(s["id"], pe.en_hash(s["en"]), certs, ai)
+            s["review"] = review_of(s["id"], pe.en_hash(s["en"]), pe.line_hash(s["en"], s["basis"], s["flags"]), certs, ai)
         n_cert = sum(s["review"] != "draft" for s in segs)
         n_owner = sum(s["review"] == "owner" for s in segs)
         complete = n_cert == len(segs) and segs
@@ -171,7 +172,7 @@ def export(preview: bool) -> int:
             s["flags_parts"] = basis_parts(s["flags"], lecture, noted)
         rows = pe.read_glossary(PROV / f"{tid}.glossary.tsv")
         for g in rows:
-            g["review"] = review_of(g["id"], g["h"], certs, ai)
+            g["review"] = review_of(g["id"], g["h"], g["h"], certs, ai)
             g["words"] = [dict(w, href=tx(w["lesson"], w["a"])) for w in pe.cited_words(lecture, g["cite"]) if w["lines"]] \
                 if lecture else []
             g["teacher"] = [x.strip() for x in g["teacher"].split("¶") if x.strip()]
