@@ -2,6 +2,8 @@
 import Base from "../layouts/Base.astro";
 import Parts from "../components/Parts.astro";
 import GlossBody from "../components/GlossBody.astro";
+import Words from "../components/Words.astro";
+import ReviewChip from "../components/ReviewChip.astro";
 import { texts, site, url, type Text } from "../lib/data";
 
 export function getStaticPaths() {
@@ -17,9 +19,9 @@ const jsonld = {
   inLanguage: "en", url: pageUrl, isAccessibleForFree: true, license: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
   translationOfWork: { "@type": "CreativeWork", name: t.title_zh, inLanguage: "zh-Hant", author: { "@type": "Person", name: t.author_en }, identifier: `CBETA ${t.id}` },
   translator: { "@type": "Organization", name: "Claude (Anthropic), AI-generated under human direction" },
-  creativeWorkStatus: t.certified ? "Provisional, certified" : "Provisional, under review",
+  creativeWorkStatus: "Provisional",
 };
-const description = `${t.title_en} (${t.title_zh}, ${t.author_en}, CBETA ${t.id}): an English translation to read on its own or line by line beside the Chinese, with ${t.teacher_en}'s explanations of its key terms. AI-generated, provisional.`;
+const description = `${t.title_en} (${t.title_zh}, ${t.author_en}, CBETA ${t.id}): an AI translation following ${t.teacher_en}'s lectures, to read on its own or line by line beside the Chinese with the teacher's own words.`;
 const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it was made"]];
 ---
 <Base title={`${t.title_en} — English translation`} description={description} jsonld={jsonld} type="article">
@@ -29,18 +31,11 @@ const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it 
     <h1>{t.title_en}</h1>
     <p class="meta"><i>{t.title_pinyin}</i> · {t.author_en} · CBETA {t.id} · {t.n_segs} lines</p>
     <p class="meta">Read with the lectures of {t.teacher_en}{notesSeries && <>: <a href={notesSeries} lang="zh-Hant">study notes and transcripts</a> · <a href={`${site.notes}/sutra/${t.id}/`} lang="zh-Hant">every lecture citing this text</a></>}</p>
-    <p class="meta">{t.certified ? <span class="badge">certified {t.certified_at}</span> : <span class="badge warn">{t.n_certified}/{t.n_segs} lines certified</span>} · <a href={url(`files/${t.id}.tsv`)} download>Download (TSV)</a></p>
   </header>
 
-  <div class="viewbar" role="group" aria-label="View">
-    {VIEWS.map(([v, l]) => <a class="view-btn" href={`?view=${v}`} data-view-btn={v}>{l}</a>)}
-  </div>
-  <p class="view-note only-read">The English on its own. Underlined terms open a note: what the term is, where Fazang explains it, and how {teacher} explains it in his lectures.</p>
-  <p class="view-note only-bilingual">The Chinese beside the English, line by line, to check one against the other.</p>
-  <p class="view-note only-how">Line by line, with the reasons: under each line, <em>Why this reading</em> gives the teacher's reading it follows (linked to the lecture transcript) and any doubt. ⚠ marks an uncertain reading, a variant or a traced quotation; [Tr.] is a note on a term, never on doctrine.</p>
-
   <div class="notice">
-    <p><strong>AI-generated, provisional.</strong> Not an official translation. The term notes give the teacher's own words in translation, cited to the lecture. <a href={url("method/")}>How it is made</a>.</p>
+    <p><strong>An AI translation, following {teacher}'s lectures.</strong> The English was made by AI (Anthropic's Claude), choosing between the readings the Chinese allows as {teacher} reads them in his lectures on this text. A second AI review then checked every line against the Chinese and his own words.{t.n_owner > 0 && <> {t.n_owner} of {t.n_segs} lines have also been reviewed by the project owner.</>} It is not an official translation.</p>
+    <p><a href={url("method/")}>How it is made</a> · <a href={url(`files/${t.id}.tsv`)} download>Download (TSV)</a></p>
   </div>
 
   {t.guide.length > 0 && (
@@ -55,10 +50,21 @@ const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it 
     </section>
   )}
 
-  <h2 class="not-read">Contents</h2>
-  <ol class="toc not-read">
-    {t.sections.map((s) => <li><a href={`#${s.start}`}>{s.en}</a> <span lang="zh-Hant" class="muted">{s.zh}</span></li>)}
-  </ol>
+  <nav class="toolbar" aria-label="Text views">
+    <div class="viewbar" role="group" aria-label="View">
+      {VIEWS.map(([v, l]) => <a class="view-btn" href={`?view=${v}`} data-view-btn={v}>{l}</a>)}
+    </div>
+    <details class="toc-menu">
+      <summary>Contents</summary>
+      <ol>
+        {t.sections.map((s) => <li><a href={`#${s.start}`}>{s.en}</a> <span lang="zh-Hant" class="muted">{s.zh}</span></li>)}
+        {t.glossary.length > 0 && <li class="toc-gl"><a href="#glossary">Glossary</a></li>}
+      </ol>
+    </details>
+  </nav>
+  <p class="view-note only-read">The English on its own. Underlined terms open a note: what the term is, where Fazang explains it, and how {teacher} explains it.</p>
+  <p class="view-note only-bilingual">The Chinese beside the English, line by line.</p>
+  <p class="view-note only-how">Line by line with its evidence. Open <em>Why this reading</em> under a line for the reading of {teacher} it follows, his own words from the lecture (法師原話), and the study notes on the passage (筆記整理). ⚠ marks a doubt, a variant or a traced quotation; [Tr.] is a note on a word, never on doctrine.</p>
 
   {t.sections.map((s) => (
     <section class="sec">
@@ -69,16 +75,30 @@ const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it 
           <div class="seg-id"><a href={`#${g.id}`}>{g.id}</a></div>
           <p class="zh" lang="zh-Hant">{g.zh}</p>
           <p class="en"><Parts parts={g.en_parts} /></p>
-          {!g.certified && <p class="uncert">Not yet certified.</p>}
-          {(g.basis || g.flags) && (
-            <details class="why">
-              <summary>Why this reading</summary>
-              <dl>
-                {g.basis && <><dt>Teacher's reading</dt><dd><Parts parts={g.basis_parts} /></dd></>}
-                {g.flags && <><dt>Notes</dt><dd class={g.flags.includes("⚠") ? "flag" : undefined}><Parts parts={g.flags_parts} /></dd></>}
-              </dl>
-            </details>
-          )}
+          <details class="why">
+            <summary>Why this reading <ReviewChip r={g.review} /></summary>
+            <dl>
+              {g.basis && <><dt>Teacher's reading</dt><dd><Parts parts={g.basis_parts} /></dd></>}
+              {g.words.length > 0 && <><dt lang="zh-Hant">法師原話</dt><dd>
+                <p class="ev-lbl">His own words where he gives this reading (lecture transcript)</p>
+                {g.words.map((w) => <Words w={w} />)}</dd></>}
+              {g.notes.length > 0 && <><dt lang="zh-Hant">筆記整理</dt><dd>
+                <p class="ev-lbl">The study notes on this passage</p>
+                {g.notes.map((n) => (
+                  <div class="note-row" lang="zh-Hant">
+                    <p class="note-q">{n.quote}</p>
+                    <p class="note-x">{n.explanation}</p>
+                    {n.words.length > 0 && n.href && (
+                      <details class="note-w"><summary>法師原話</summary>
+                        <Words w={{ lesson: n.lesson, a: n.a, b: n.b, lines: n.words, href: n.href }} />
+                      </details>
+                    )}
+                  </div>
+                ))}</dd></>}
+              {g.flags && <><dt>Notes</dt><dd class={g.flags.includes("⚠") ? "flag" : undefined}><Parts parts={g.flags_parts} /></dd></>}
+              {!g.basis && !g.words.length && !g.notes.length && <><dt>Teacher's reading</dt><dd class="muted">None needed: the Chinese allows one reading here.</dd></>}
+            </dl>
+          </details>
         </div>
       ))}
       </div>
@@ -105,19 +125,26 @@ const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it 
   <script is:inline>
     (() => {
       const box = document.getElementById("text"), VIEWS = ["read", "bilingual", "how"];
+      // the line nearest the top of the screen, so switching view keeps the reader's place
+      const anchor = () => [...document.querySelectorAll(".seg")].find((el) => el.getBoundingClientRect().bottom > 80);
       const set = (v, push) => {
         if (!VIEWS.includes(v)) v = "read";
+        const keep = push && anchor(), off = keep && keep.getBoundingClientRect().top;
         box.dataset.view = v;
         document.querySelectorAll("[data-view-btn]").forEach((a) => a.setAttribute("aria-current", a.dataset.viewBtn === v ? "true" : "false"));
         try { localStorage.setItem("view", v); } catch (e) {}
-        if (push) { const u = new URL(location.href); u.searchParams.set("view", v); history.replaceState(null, "", u); }
+        if (push) {
+          const u = new URL(location.href); u.searchParams.set("view", v); history.replaceState(null, "", u);
+          if (keep && off > 0) scrollBy(0, keep.getBoundingClientRect().top - off);
+        }
       };
       let saved = null;
       try { saved = localStorage.getItem("view"); } catch (e) {}
       set(new URLSearchParams(location.search).get("view") || saved || "read", false);
       document.querySelectorAll("[data-view-btn]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); set(a.dataset.viewBtn, true); }));
+      document.querySelectorAll(".toc-menu a").forEach((a) => a.addEventListener("click", () => a.closest("details").removeAttribute("open")));
 
-      // A term opens its glossary entry as a note beside the text; without the popover API the link goes to the glossary.
+      // A term opens its glossary entry as a note; without the popover API the link goes to the glossary.
       const pop = document.getElementById("pop");
       if (!pop.showPopover) return;
       document.addEventListener("click", (e) => {

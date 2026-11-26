@@ -34,7 +34,7 @@ const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
-    {preview && <div class="preview-bar" role="status">Local preview: includes uncertified lines. This build is never deployed.</div>}
+    {preview && <div class="preview-bar" role="status">Local preview: includes lines not yet checked (marked Draft). This build is never deployed.</div>}
     <header class="site-head">
       <div class="site-head-inner">
         <a class="brand" href={url("/")}>{site.title}</a>
@@ -50,7 +50,7 @@ const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
       <slot />
     </main>
     <footer class="site-foot">
-      <p>The English on this site is <strong>AI-generated</strong> (Anthropic's Claude) under human direction, and provisional: it is not an official translation. Each line shows the teacher's reading it follows and every doubt. <a href={url("method/")}>How it is made</a>.</p>
+      <p>The English on this site is <strong>AI-generated</strong> (Anthropic's Claude) under human direction, following an approved teacher's lectures, and checked by a second AI review; it is not an official translation. Each line shows the teacher's reading it follows, his own words, and every doubt. <a href={url("method/")}>How it is made</a>.</p>
       <p>Chinese text: CBETA, CC BY-NC-SA 4.0. The translations are shared under the same licence: free to use and share with attribution, never sold.</p>
     </footer>
     <script is:inline>

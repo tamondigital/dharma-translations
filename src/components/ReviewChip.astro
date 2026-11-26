@@ -1,0 +1,7 @@
+---
+import type { Review } from "../lib/data";
+// Who checked this line: the project owner, the AI reviewer, or no one yet (draft, shown only in local preview).
+const { r } = Astro.props as { r: Review };
+const label = { owner: "Reviewed by the project owner", ai: "Checked by AI review", draft: "Draft: not yet checked" }[r];
+---
+<span class={`chip chip-${r}`}>{label}</span>

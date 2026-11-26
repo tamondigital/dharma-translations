@@ -1,17 +1,25 @@
 ---
 import type { Gloss } from "../lib/data";
 import Parts from "./Parts.astro";
-// The body of one term note or guide paragraph: what it is, where the text explains it, the teacher's words.
+import Words from "./Words.astro";
+import ReviewChip from "./ReviewChip.astro";
+// The body of one term note or guide paragraph: what it is, where the text explains it, the teacher's words
+// translated, and the Chinese they are translated from.
 const { g, teacher } = Astro.props as { g: Gloss; teacher: string };
 ---
 {g.sense && <p class="g-sense">{g.sense}</p>}
 {g.defined && g.defined_first && <p class="g-def">Fazang explains it himself at <a href={`#${g.defined_first}`} data-close>{g.defined}</a>.</p>}
 {g.teacher.length > 0 && (
   <div class="g-teacher">
-    <p class="g-lbl">{g.kind === "guide" ? "The teacher introduces it" : "How the teacher explains it"} <span class="muted">{" — "}{teacher}'s own words, translated</span></p>
+    <p class="g-lbl">{g.kind === "guide" ? "The teacher introduces it" : "How the teacher explains it"}<span class="muted">{" — "}{teacher}'s words, translated by AI</span></p>
     <blockquote>{g.teacher.map((t) => <p>{t}</p>)}</blockquote>
-    <p class="g-cite"><Parts parts={g.cite_parts} /></p>
+    {g.words.length > 0 && (
+      <details class="g-zh">
+        <summary>His words in Chinese <span lang="zh-Hant">法師原話</span></summary>
+        {g.words.map((w) => <Words w={w} />)}
+      </details>
+    )}
   </div>
 )}
 {g.flags && <p class={g.flags.includes("⚠") ? "g-flag flag" : "g-flag"}><Parts parts={g.flags_parts} /></p>}
-{!g.certified && <p class="uncert">Not yet certified.</p>}
+<p class="g-rev"><ReviewChip r={g.review} /></p>

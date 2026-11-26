@@ -1,0 +1,9 @@
+---
+import type { Words } from "../lib/data";
+// The teacher's own transcript lines (Chinese, OCR of the lecture), with a link to that place in the transcript.
+const { w } = Astro.props as { w: Words };
+---
+<blockquote class="words" lang="zh-Hant">
+  {w.lines.map((l) => <p>{l.text}</p>)}
+  <a class="words-src" href={w.href} lang="en">lecture {w.lesson}, line{w.a === w.b ? ` ${w.a}` : `s ${w.a}–${w.b}`} ↗</a>
+</blockquote>

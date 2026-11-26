@@ -7,11 +7,11 @@ const jsonld = { "@context": "https://schema.org", "@type": "WebSite", name: sit
   <h1>{site.title}</h1>
   <p class="lede">English translations of Chinese Buddhist texts that have no translation from an approved source. Each line is read through the lectures of an approved teacher, and the page shows why it reads the way it does.</p>
   <div class="notice">
-    <p><strong>AI-generated, provisional.</strong> The English is drafted by an AI model under human direction, checked against the canon and the teacher's lectures, reviewed independently, and certified line by line by the project owner. It is not an official translation. <a href={url("method/")}>Read the method and its measured error rate</a>.</p>
+    <p><strong>AI translations, following an approved teacher's lectures.</strong> The English is made by AI under human direction, choosing between the readings the Chinese allows as the teacher reads them, then checked line by line by a second AI review against the Chinese and the teacher's own words; the project owner reviews what that check flags. Not an official translation. <a href={url("method/")}>Read the method and its measured error rate</a>.</p>
   </div>
   <h2>Texts</h2>
   {index.texts.length === 0 ? (
-    <p class="muted">The first translation is under review. It appears here once every line is certified.</p>
+    <p class="muted">The first translation is under review. It appears here once every line has been checked.</p>
   ) : (
     <ul class="cards">
       {index.texts.map((t) => (
@@ -19,7 +19,7 @@ const jsonld = { "@context": "https://schema.org", "@type": "WebSite", name: sit
           <h3><a href={url(`${t.slug}/`)}>{t.title_en}</a></h3>
           <p class="zh" lang="zh-Hant">{t.title_zh}</p>
           <p class="meta">{t.author_en} · CBETA {t.id} · {t.n_segs} lines · read with {t.teacher_en}{" "}
-            {t.certified ? <span class="badge">certified {t.certified_at}</span> : <span class="badge warn">{t.n_certified}/{t.n_segs} certified</span>}</p>
+            {t.certified ? <span class="badge">AI-checked{t.n_owner > 0 ? ` · ${t.n_owner} lines owner-reviewed` : ""}</span> : <span class="badge warn">draft: {t.n_certified}/{t.n_segs} lines checked</span>}</p>
         </li>
       ))}
     </ul>
