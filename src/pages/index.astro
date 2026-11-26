@@ -1,0 +1,29 @@
+---
+import Base from "../layouts/Base.astro";
+import { site, index, url } from "../lib/data";
+const jsonld = { "@context": "https://schema.org", "@type": "WebSite", name: site.title, url: new URL(url("/"), Astro.site).href, inLanguage: "en" };
+---
+<Base title={site.title} jsonld={jsonld}>
+  <h1>{site.title}</h1>
+  <p class="lede">English translations of Chinese Buddhist texts that have no translation from an approved source. Each line is read through the lectures of an approved teacher, and the page shows why it reads the way it does.</p>
+  <div class="notice">
+    <p><strong>AI-generated, provisional.</strong> The English is drafted by an AI model under human direction, checked against the canon and the teacher's lectures, reviewed independently, and certified line by line by the project owner. It is not an official translation. <a href={url("method/")}>Read the method and its measured error rate</a>.</p>
+  </div>
+  <h2>Texts</h2>
+  {index.texts.length === 0 ? (
+    <p class="muted">The first translation is under review. It appears here once every line is certified.</p>
+  ) : (
+    <ul class="cards">
+      {index.texts.map((t) => (
+        <li class="card">
+          <h3><a href={url(`${t.slug}/`)}>{t.title_en}</a></h3>
+          <p class="zh" lang="zh-Hant">{t.title_zh}</p>
+          <p class="meta">{t.author_en} · CBETA {t.id} · {t.n_segs} lines · read with {t.teacher_en}{" "}
+            {t.certified ? <span class="badge">certified {t.certified_at}</span> : <span class="badge warn">{t.n_certified}/{t.n_segs} certified</span>}</p>
+        </li>
+      ))}
+    </ul>
+  )}
+  <h2>Related</h2>
+  <p>The teachers' lectures these readings come from, as Chinese study notes and full transcripts: <a href={`${site.notes}/`} lang="zh-Hant">講經筆記</a>.</p>
+</Base>

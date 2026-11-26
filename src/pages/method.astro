@@ -1,0 +1,13 @@
+---
+import Base from "../layouts/Base.astro";
+import { marked } from "marked";
+import { methodMd } from "../lib/data";
+// METHOD.md is mani's published account of the method; scripts/export.py has already resolved its links.
+const html = marked.parse(methodMd.replace(/^# .*\n/, ""));
+---
+<Base title="How these translations are made" description="The sources, steps, checks, measured error rate and limits behind every provisional translation on this site.">
+  <article class="prose">
+    <h1>How these translations are made</h1>
+    <Fragment set:html={html} />
+  </article>
+</Base>

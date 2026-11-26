@@ -1,0 +1,65 @@
+name: Deploy to GitHub Pages
+
+# Manual only until the owner approves the first public deploy; then add `push: branches: [main]`.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  # Tell Bing (and Yandex, Seznam, Naver) about the site's URLs after each deploy. The key file sits at the
+  # domain root (tamondigital.github.io repo), so it covers every path under tiedy.com.
+  indexnow:
+    needs: deploy
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Submit sitemap URLs to IndexNow
+        run: |
+          sleep 60
+          python3 - <<'PY'
+          import json, re, urllib.request
+          base = "https://tiedy.com/dharma-translations/"
+          key = "c2b9d4253ab442119a20f67504d147e7"
+          get = lambda u: urllib.request.urlopen(u, timeout=30).read().decode()
+          locs = lambda xml: re.findall(r"<loc>([^<]+)</loc>", xml)
+          urls = [u for sm in locs(get(base + "sitemap-index.xml")) for u in locs(get(sm))]
+          print(f"{len(urls)} URLs")
+          body = json.dumps({"host": "tiedy.com", "key": key,
+                             "keyLocation": f"https://tiedy.com/{key}.txt", "urlList": urls}).encode()
+          req = urllib.request.Request("https://api.indexnow.org/indexnow", data=body,
+                                       headers={"Content-Type": "application/json; charset=utf-8"})
+          with urllib.request.urlopen(req, timeout=60) as r:
+              print("IndexNow:", r.status)
+          PY

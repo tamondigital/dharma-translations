@@ -1,0 +1,58 @@
+---
+import Base from "../layouts/Base.astro";
+import { texts, site, url, type Text } from "../lib/data";
+
+export function getStaticPaths() {
+  return texts.map((t) => ({ params: { slug: t.slug }, props: { t } }));
+}
+const { t } = Astro.props as { t: Text };
+const lec = t.lectures[0];
+const notesSeries = lec && `${site.notes}/${lec.channel}/${lec.playlist}/`;
+const pageUrl = new URL(url(`${t.slug}/`), Astro.site).href;
+const jsonld = {
+  "@context": "https://schema.org", "@type": "CreativeWork", name: t.title_en, alternateName: [t.title_zh, t.title_pinyin],
+  inLanguage: "en", url: pageUrl, isAccessibleForFree: true, license: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  translationOfWork: { "@type": "CreativeWork", name: t.title_zh, inLanguage: "zh-Hant", author: { "@type": "Person", name: t.author_en }, identifier: `CBETA ${t.id}` },
+  translator: { "@type": "Organization", name: "Claude (Anthropic), AI-generated under human direction" },
+  creativeWorkStatus: t.certified ? "Provisional, certified" : "Provisional, under review",
+};
+const description = `${t.title_en} (${t.title_zh}, ${t.author_en}, CBETA ${t.id}): a line-by-line English translation beside the Chinese, read with ${t.teacher_en}'s lectures. AI-generated, provisional.`;
+---
+<Base title={`${t.title_en} — English translation`} description={description} jsonld={jsonld} type="article">
+  <header class="text-head">
+    <p class="zh" lang="zh-Hant">{t.title_zh}</p>
+    <h1>{t.title_en}</h1>
+    <p class="meta"><i>{t.title_pinyin}</i> · {t.author_en} · CBETA {t.id} · {t.n_segs} lines</p>
+    <p class="meta">Read with the lectures of {t.teacher_en}{notesSeries && <>: <a href={notesSeries} lang="zh-Hant">study notes and transcripts</a> · <a href={`${site.notes}/sutra/${t.id}/`} lang="zh-Hant">every lecture citing this text</a></>}</p>
+    <p class="meta">{t.certified ? <span class="badge">certified {t.certified_at}</span> : <span class="badge warn">{t.n_certified}/{t.n_segs} lines certified</span>} · <a href={url(`files/${t.id}.tsv`)} download>Download (TSV)</a></p>
+  </header>
+  <div class="notice">
+    <p><strong>AI-generated, provisional.</strong> Not an official translation. Under each line, <em>Why this reading</em> gives the teacher's reading it follows (linked to the lecture transcript) and any doubt: ⚠ marks an uncertain reading, a variant or a traced quotation; [Tr.] is a note on a term, never on doctrine. <a href={url("method/")}>Method</a>.</p>
+  </div>
+  <h2>Contents</h2>
+  <ol class="toc">
+    {t.sections.map((s) => <li><a href={`#${s.start}`}>{s.en}</a> <span lang="zh-Hant" class="muted">{s.zh}</span></li>)}
+  </ol>
+  {t.sections.map((s) => (
+    <section>
+      <h2 class="section-head" id={s.start}>{s.en}<span class="zh" lang="zh-Hant">{s.zh}</span></h2>
+      {s.segs.map((g) => (
+        <div class="seg" id={g.id}>
+          <div class="seg-id"><a href={`#${g.id}`}>{g.id}</a></div>
+          <p class="zh" lang="zh-Hant">{g.zh}</p>
+          <p class="en">{g.en}</p>
+          {!g.certified && <p class="uncert">Not yet certified.</p>}
+          {(g.basis || g.flags) && (
+            <details class="why">
+              <summary>Why this reading</summary>
+              <dl>
+                {g.basis && <><dt>Teacher's reading</dt><dd>{g.basis_parts.map((p) => p.href ? <a href={p.href}>{p.t}</a> : p.t)}</dd></>}
+                {g.flags && <><dt>Notes</dt><dd class={g.flags.includes("⚠") ? "flag" : undefined}>{g.flags_parts.map((p) => p.href ? <a href={p.href}>{p.t}</a> : p.t)}</dd></>}
+              </dl>
+            </details>
+          )}
+        </div>
+      ))}
+    </section>
+  ))}
+</Base>

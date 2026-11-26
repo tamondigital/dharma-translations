@@ -1,0 +1,18 @@
+{
+  "name": "dharma-translations",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export": "python3 scripts/export.py",
+    "export:preview": "python3 scripts/export.py --preview",
+    "dev": "astro dev",
+    "preview:dev": "PREVIEW=1 astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "3.7.3",
+    "astro": "5.18.2",
+    "marked": "15.0.12"
+  }
+}

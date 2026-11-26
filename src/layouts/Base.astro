@@ -1,0 +1,65 @@
+---
+import "../styles/site.css";
+import { url, site, preview } from "../lib/data";
+
+interface Props { title: string; description?: string; jsonld?: object; type?: "website" | "article" }
+const { title, description = site.tagline, jsonld, type = "website" } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = title === site.title ? title : `${title} | ${site.title}`;
+// JSON inside <script>: keep "</script>" and "<!--" from closing or confusing the element
+const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {preview && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary" />
+    {ld && <script type="application/ld+json" set:html={ld} />}
+    <link rel="sitemap" href={url("sitemap-index.xml")} />
+    <link rel="icon" href={url("favicon.svg")} type="image/svg+xml" />
+    <script is:inline>
+      try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    {preview && <div class="preview-bar" role="status">Local preview: includes uncertified lines. This build is never deployed.</div>}
+    <header class="site-head">
+      <div class="site-head-inner">
+        <a class="brand" href={url("/")}>{site.title}</a>
+        <nav aria-label="Main">
+          <a href={url("/")}>Texts</a>
+          <a href={url("method/")}>Method</a>
+          <a href={`${site.notes}/`} lang="zh-Hant">講經筆記</a>
+          <button class="theme-toggle" type="button" aria-label="Toggle light / dark" title="Toggle light / dark">◐</button>
+        </nav>
+      </div>
+    </header>
+    <main id="main" tabindex="-1" class="page">
+      <slot />
+    </main>
+    <footer class="site-foot">
+      <p>The English on this site is <strong>AI-generated</strong> (Anthropic's Claude) under human direction, and provisional: it is not an official translation. Each line shows the teacher's reading it follows and every doubt. <a href={url("method/")}>How it is made</a>.</p>
+      <p>Chinese text: CBETA, CC BY-NC-SA 4.0. The translations are shared under the same licence: free to use and share with attribution, never sold.</p>
+    </footer>
+    <script is:inline>
+      document.querySelector(".theme-toggle")?.addEventListener("click", () => {
+        const r = document.documentElement;
+        const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        r.dataset.theme = dark ? "light" : "dark";
+        try { localStorage.setItem("theme", r.dataset.theme); } catch (e) {}
+      });
+    </script>
+  </body>
+</html>

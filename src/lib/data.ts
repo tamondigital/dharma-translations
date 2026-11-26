@@ -1,0 +1,29 @@
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+
+// PREVIEW=1 reads content-preview/ (every text, certified or not; never deployed). The deploy builds content/,
+// which scripts/export.py fills with fully certified texts only.
+const DIR = new URL(process.env.PREVIEW ? "../../content-preview/" : "../../content/", import.meta.url);
+const cfg = JSON.parse(readFileSync(new URL("../../site.config.json", import.meta.url), "utf-8"));
+
+export const site = { title: cfg.title as string, tagline: cfg.tagline as string, notes: cfg.dharma_notes as string };
+export const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+export const url = (p: string) => `${base}/${p.replace(/^\//, "")}`;
+
+export interface Part { t: string; href?: string }
+export interface Seg { id: string; zh: string; en: string; basis: string; flags: string; certified: boolean; basis_parts: Part[]; flags_parts: Part[] }
+export interface Section { start: string; en: string; zh: string; segs: Seg[] }
+export interface Lecture { teacher: string; channel: string; playlist: string }
+export interface Text {
+  id: string; slug: string; title_en: string; title_zh: string; title_pinyin: string; author_en: string; teacher_en: string;
+  lectures: Lecture[]; certified: boolean; certified_at: string | null; n_segs: number; n_certified: number;
+  sections: Section[]; tsv: string;
+}
+
+const read = (p: string) => JSON.parse(readFileSync(new URL(p, DIR), "utf-8"));
+export const index: { preview: boolean; texts: Omit<Text, "sections" | "lectures" | "tsv">[] } =
+  existsSync(new URL("index.json", DIR)) ? read("index.json") : { preview: false, texts: [] };
+export const preview = index.preview;
+export const texts: Text[] = existsSync(new URL("texts/", DIR))
+  ? readdirSync(new URL("texts/", DIR)).filter((f) => f.endsWith(".json")).sort().map((f) => read(`texts/${f}`))
+  : [];
+export const methodMd: string = existsSync(new URL("method.md", DIR)) ? readFileSync(new URL("method.md", DIR), "utf-8") : "";
