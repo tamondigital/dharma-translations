@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "export": "python3 scripts/export.py",
+    "theme": "sh scripts/sync_theme.sh",
     "export:preview": "python3 scripts/export.py --preview",
     "dev": "astro dev",
     "preview:dev": "PREVIEW=1 astro dev",

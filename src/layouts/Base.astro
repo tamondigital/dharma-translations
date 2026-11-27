@@ -1,9 +1,11 @@
 ---
+import "../styles/theme/tokens.css";
+import "../styles/theme/chrome.css";
 import "../styles/site.css";
 import { url, site, preview } from "../lib/data";
 
-interface Props { title: string; description?: string; jsonld?: object; type?: "website" | "article" }
-const { title, description = site.tagline, jsonld, type = "website" } = Astro.props;
+interface Props { title: string; description?: string; jsonld?: object; type?: "website" | "article"; wide?: boolean }
+const { title, description = site.tagline, jsonld, type = "website", wide = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const fullTitle = title === site.title ? title : `${title} | ${site.title}`;
 // JSON inside <script>: keep "</script>" and "<!--" from closing or confusing the element
@@ -29,8 +31,12 @@ const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
     <link rel="sitemap" href={url("sitemap-index.xml")} />
     <link rel="icon" href={url("favicon.svg")} type="image/svg+xml" />
     <script is:inline>
-      try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+      try {
+        const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t;
+        const f = Number(localStorage.getItem("font-scale")); if (f) document.documentElement.style.fontSize = Math.round(f * 100) + "%";
+      } catch (e) {}
     </script>
+    <script is:inline src={url("theme/chrome.js")} defer></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -38,28 +44,30 @@ const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
     <header class="site-head">
       <div class="site-head-inner">
         <a class="brand" href={url("/")}>{site.title}</a>
-        <nav aria-label="Main">
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          <span class="menu-icon" aria-hidden="true"></span>Menu
+        </button>
+        <nav id="site-nav" aria-label="Main">
           <a href={url("/")}>Texts</a>
           <a href={url("method/")}>Method</a>
           <a href={`${site.notes}/`} lang="zh-Hant">講經筆記</a>
-          <button class="theme-toggle" type="button" aria-label="Toggle light / dark" title="Toggle light / dark">◐</button>
+          <span class="nav-settings">
+            <span class="nav-label" aria-hidden="true">Text</span>
+            <span class="font-size" role="group" aria-label="Text size">
+              <button type="button" data-font="-1" aria-label="Smaller text" title="Smaller text">A<small>−</small></button>
+              <button type="button" data-font="1" aria-label="Larger text" title="Larger text">A<small>+</small></button>
+            </span>
+            <button class="theme-toggle" type="button" aria-label="Light or dark" title="Light or dark">◐<span class="nav-label" aria-hidden="true">Light / dark</span></button>
+          </span>
         </nav>
       </div>
     </header>
-    <main id="main" tabindex="-1" class="page">
+    <main id="main" tabindex="-1" class:list={["page", { wide }]}>
       <slot />
     </main>
     <footer class="site-foot">
       <p>The English on this site is <strong>AI-generated</strong> (Anthropic's Claude) under human direction, following an approved teacher's lectures, and checked by a second AI review; it is not an official translation. Each line shows the teacher's reading it follows, his own words, and every doubt. <a href={url("method/")}>How it is made</a>.</p>
       <p>Chinese text: CBETA, CC BY-NC-SA 4.0. The translations are shared under the same licence: free to use and share with attribution, never sold.</p>
     </footer>
-    <script is:inline>
-      document.querySelector(".theme-toggle")?.addEventListener("click", () => {
-        const r = document.documentElement;
-        const dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-        r.dataset.theme = dark ? "light" : "dark";
-        try { localStorage.setItem("theme", r.dataset.theme); } catch (e) {}
-      });
-    </script>
   </body>
 </html>

@@ -13,3 +13,4 @@ No job in this repo calls a model. `scripts/export.py` and the build are determi
 - Committing a new export to `content/` and deploying is a publish decision: the owner's, not the agent's.
 - Every page keeps the AI-generated label and the link to the method page.
 - Links to dharma-notes are URLs only; never import code or data from that repo.
+- The look and page chrome (tokens, header and phone menu, text size, light/dark, 目次 rail, cards) come from the shared tiedy theme in `../tamondigital.github.io/theme/` (its README is the contract). `src/styles/theme/` and `public/theme/` are synced copies: change the theme there, then `npm run theme`; never edit the copies. App styles in `src/styles/site.css` use the tokens only.

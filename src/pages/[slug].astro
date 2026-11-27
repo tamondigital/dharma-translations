@@ -22,10 +22,22 @@ const jsonld = {
   creativeWorkStatus: "Provisional",
 };
 const description = `${t.title_en} (${t.title_zh}, ${t.author_en}, CBETA ${t.id}): an AI translation following ${t.teacher_en}'s lectures, to read on its own or line by line beside the Chinese with the teacher's own words.`;
-const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it was made"]];
+const VIEWS = [["read", "Read", "Read"], ["bilingual", "Side by side", "Bilingual"], ["how", "How it was made", "How"]];
 ---
-<Base title={`${t.title_en} — English translation`} description={description} jsonld={jsonld} type="article">
-  <div id="text" data-view="read">
+<Base title={`${t.title_en} — English translation`} description={description} jsonld={jsonld} type="article" wide>
+  <div class="reader">
+  {/* 目次 rail (wide screens); on a narrow screen the same list folds out of the toolbar */}
+  <div class="side">
+    <nav class="toc" aria-label="Contents">
+      <p class="toc-h">CONTENTS · 目次</p>
+      <ol>
+        {t.guide.length > 0 && <li><a href="#guide">Before you read</a></li>}
+        {t.sections.map((s) => <li><a href={`#${s.start}`}>{s.en}</a></li>)}
+        {t.glossary.length > 0 && <li class="toc-sep"><a href="#glossary">Glossary</a></li>}
+      </ol>
+    </nav>
+  </div>
+  <div class="reader-main" id="text" data-view="read">
   <header class="text-head">
     <p class="zh" lang="zh-Hant">{t.title_zh}</p>
     <h1>{t.title_en}</h1>
@@ -51,15 +63,18 @@ const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it 
   )}
 
   <nav class="toolbar" aria-label="Text views">
-    <div class="viewbar" role="group" aria-label="View">
-      {VIEWS.map(([v, l]) => <a class="view-btn" href={`?view=${v}`} data-view-btn={v}>{l}</a>)}
+    <div class="seg-switch" role="group" aria-label="View">
+      {VIEWS.map(([v, l, short]) => <a href={`?view=${v}`} data-view-btn={v}><span class="lbl-long">{l}</span><span class="lbl-short">{short}</span></a>)}
     </div>
-    <details class="toc-menu">
-      <summary>Contents</summary>
-      <ol>
-        {t.sections.map((s) => <li><a href={`#${s.start}`}>{s.en}</a> <span lang="zh-Hant" class="muted">{s.zh}</span></li>)}
-        {t.glossary.length > 0 && <li class="toc-gl"><a href="#glossary">Glossary</a></li>}
-      </ol>
+    <details class="toc-menu narrow-only">
+      <summary>目次</summary>
+      <nav class="toc" aria-label="Contents">
+        <ol>
+          {t.guide.length > 0 && <li><a href="#guide">Before you read</a></li>}
+          {t.sections.map((s) => <li><a href={`#${s.start}`}>{s.en} <span lang="zh-Hant" class="muted">{s.zh}</span></a></li>)}
+          {t.glossary.length > 0 && <li class="toc-sep"><a href="#glossary">Glossary</a></li>}
+        </ol>
+      </nav>
     </details>
   </nav>
   <p class="view-note only-read">The English on its own. Underlined terms open a note: what the term is, where Fazang explains it, and how {teacher} explains it.</p>
@@ -118,6 +133,7 @@ const VIEWS = [["read", "Read"], ["bilingual", "Side by side"], ["how", "How it 
       </dl>
     </section>
   )}
+  </div>
   </div>
 
   <div id="pop" popover class="pop" role="dialog" aria-label="Term note"></div>

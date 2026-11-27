@@ -9,21 +9,23 @@ const jsonld = { "@context": "https://schema.org", "@type": "WebSite", name: sit
   <div class="notice">
     <p><strong>AI translations, following an approved teacher's lectures.</strong> The English is made by AI under human direction, choosing between the readings the Chinese allows as the teacher reads them, then checked line by line by a second AI review against the Chinese and the teacher's own words; the project owner reviews what that check flags. Not an official translation. <a href={url("method/")}>Read the method and its measured error rate</a>.</p>
   </div>
-  <h2>Texts</h2>
+  <h2 class="section-title">Texts</h2>
   {index.texts.length === 0 ? (
     <p class="muted">The first translation is under review. It appears here once every line has been checked.</p>
   ) : (
     <ul class="cards">
       {index.texts.map((t) => (
-        <li class="card">
-          <h3><a href={url(`${t.slug}/`)}>{t.title_en}</a></h3>
+        <li><a class="card" href={url(`${t.slug}/`)}>
+          <h3>{t.title_en}</h3>
           <p class="zh" lang="zh-Hant">{t.title_zh}</p>
-          <p class="meta">{t.author_en} · CBETA {t.id} · {t.n_segs} lines · read with {t.teacher_en}{" "}
-            {t.certified ? <span class="badge">AI-checked{t.n_owner > 0 ? ` · ${t.n_owner} lines owner-reviewed` : ""}</span> : <span class="badge warn">draft: {t.n_certified}/{t.n_segs} lines checked</span>}</p>
-        </li>
+          <p>{t.author_en} · CBETA {t.id} · {t.n_segs} lines · read with {t.teacher_en}</p>
+          <p style="margin-top:8px">{t.certified
+            ? <span class="pill accent">AI-checked{t.n_owner > 0 ? ` · ${t.n_owner} lines owner-reviewed` : ""}</span>
+            : <span class="pill warn">draft: {t.n_certified}/{t.n_segs} lines checked</span>}</p>
+        </a></li>
       ))}
     </ul>
   )}
-  <h2>Related</h2>
+  <h2 class="section-title">Related</h2>
   <p>The teachers' lectures these readings come from, as Chinese study notes and full transcripts: <a href={`${site.notes}/`} lang="zh-Hant">講經筆記</a>.</p>
 </Base>

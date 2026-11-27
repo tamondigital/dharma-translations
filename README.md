@@ -34,3 +34,10 @@ npm run preview:dev         # http://localhost:4321/dharma-translations/ with a 
 - `/files/<T-id>.tsv` the source file, CC BY-NC-SA 4.0
 
 Links to dharma-notes are by URL only (`dharma_notes` in `site.config.json`); no code is shared between the sites.
+
+## Look and layout
+
+The site follows the shared **tiedy theme** (`../tamondigital.github.io/theme/`, see its README): the same header,
+phone menu, text size and light/dark controls as 講經筆記. On a wide screen a text page has the 目次 rail on the left;
+on a phone the same list opens from the 目次 button in the toolbar above the text, and a term's note opens as a
+bottom sheet. After the theme changes: `npm run theme`, then rebuild.
