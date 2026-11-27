@@ -11,6 +11,7 @@ Reads (never writes) <mani>/reference/translation/provisional/:
   METHOD.md
 
   review/<T-id>/ai-review.json       {id: {verdict: pass|flag, reason, h, model, at}}, the AI reviewer's
+  review/<T-id>/ai-review-2.json     the same from the second reviewer (a different model family)
 
 A line or glossary row is cleared for the site when the owner certified it, or, with no owner's mark, the AI
 reviewer passed it; either mark must hold the hash of the current text (a changed line is not cleared).
@@ -40,14 +41,14 @@ TID = re.compile(r"^T\d{4}[A-Za-z]?$")
 GLOSSARY_COLS = ["id", "kind", "zh", "term", "sense", "defined", "teacher", "cite", "flags"]
 
 
-def review_of(rid: str, h: str, ah: str, certs: dict, ai: dict) -> str:
-    """"owner" | "ai" | "draft": the owner's mark (hash h) outranks the AI reviewer's (hash ah); a mark on other text
-    does not count."""
+def review_of(rid: str, h: str, ah: str, certs: dict, ai: dict, ai2: dict) -> str:
+    """"owner" | "ai" | "draft": the owner's mark (hash h) outranks the AI reviewers' (hash ah); once a text has a
+    second review (ai2 not empty) an AI pass needs both; a mark on other text does not count."""
     c = certs.get(rid)
     if c and c.get("h") == h:
         return "owner" if c.get("status") == "certified" else "draft"
-    v = ai.get(rid)
-    return "ai" if v and v.get("h") == ah and v.get("verdict") == "pass" else "draft"
+    ok = lambda v: bool(v) and v.get("h") == ah and v.get("verdict") == "pass"
+    return "ai" if ok(ai.get(rid)) and (not ai2 or ok(ai2.get(rid))) else "draft"
 
 
 def read_tsv(p: Path) -> tuple[list[str], list[dict]]:
@@ -150,9 +151,9 @@ def export(preview: bool) -> int:
         meta = json.loads((PROV / f"{tid}.meta.json").read_text(encoding="utf-8"))
         rev = PROV / "review" / tid
         load = lambda f: json.loads((rev / f).read_text(encoding="utf-8")) if (rev / f).is_file() else {}
-        certs, ai = load("certification.json"), load("ai-review.json")
+        certs, ai, ai2 = load("certification.json"), load("ai-review.json"), load("ai-review-2.json")
         for s in segs:
-            s["review"] = review_of(s["id"], pe.en_hash(s["en"]), pe.line_hash(s["en"], s["basis"], s["flags"]), certs, ai)
+            s["review"] = review_of(s["id"], pe.en_hash(s["en"]), pe.line_hash(s["en"], s["basis"], s["flags"]), certs, ai, ai2)
         n_cert = sum(s["review"] != "draft" for s in segs)
         n_owner = sum(s["review"] == "owner" for s in segs)
         complete = n_cert == len(segs) and segs
@@ -172,7 +173,7 @@ def export(preview: bool) -> int:
             s["flags_parts"] = basis_parts(s["flags"], lecture, noted)
         rows = pe.read_glossary(PROV / f"{tid}.glossary.tsv")
         for g in rows:
-            g["review"] = review_of(g["id"], g["h"], g["h"], certs, ai)
+            g["review"] = review_of(g["id"], g["h"], g["h"], certs, ai, ai2)
             g["words"] = [dict(w, href=tx(w["lesson"], w["a"])) for w in pe.cited_words(lecture, g["cite"]) if w["lines"]] \
                 if lecture else []
             g["teacher"] = [x.strip() for x in g["teacher"].split("¶") if x.strip()]
