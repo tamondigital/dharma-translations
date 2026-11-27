@@ -1,8 +1,13 @@
 ---
 import type { Review } from "../lib/data";
-// Who checked this line: the project owner, the AI reviewer, or no one yet (draft, shown only in local preview).
-const { r } = Astro.props as { r: Review };
-const label = { owner: "Reviewed by the project owner", ai: "Checked by AI review",
-  "ai-resolved": "Checked by AI review · an objection answered from the sources", draft: "Draft: not yet checked" }[r];
+// Who checked this line: the project owner, or the AI reviewers by model name (never the gateway that served them).
+const { r, by = [] } = Astro.props as { r: Review; by?: string[] };
+const who = by.length ? by.join(" · ") : "AI review";
+const label = {
+  owner: "Reviewed by the project owner",
+  ai: `Checked by ${who}`,
+  "ai-resolved": `Checked by ${who} · an objection answered from the sources`,
+  draft: "Draft: not yet checked",
+}[r];
 ---
 <span class={`chip chip-${r === "ai-resolved" ? "ai" : r}`}>{label}</span>

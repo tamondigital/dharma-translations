@@ -23,4 +23,4 @@ const { g, teacher } = Astro.props as { g: Gloss; teacher: string };
 )}
 {g.flags && <p class={g.flags.includes("⚠") ? "g-flag flag" : "g-flag"}><Parts parts={g.flags_parts} /></p>}
 {g.resolution && <p class="g-flag">A reviewer objected; the objection was checked against the sources and answered: {g.resolution}</p>}
-<p class="g-rev"><ReviewChip r={g.review} /></p>
+<p class="g-rev"><ReviewChip r={g.review} by={g.reviewers} /></p>

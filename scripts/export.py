@@ -43,6 +43,22 @@ TID = re.compile(r"^T\d{4}[A-Za-z]?$")
 GLOSSARY_COLS = ["id", "kind", "zh", "term", "sense", "defined", "teacher", "cite", "flags"]
 
 
+def model_name(model: str) -> str:
+    """The reviewing model as a reader should see it: 'claude-opus-5-5' → 'Claude Opus 5.5'; a gateway's model id
+    without its provider path or tier suffix. Gateways are never named on the site."""
+    m = (model or "").split("/")[-1].split(":")[0]
+    if m.lower().startswith("claude-"):
+        w = m.split("-")[1:]
+        ver = ".".join(x for x in w if x.isdigit())
+        return " ".join(["Claude"] + [x.capitalize() for x in w if not x.isdigit()] + ([ver] if ver else []))
+    return m
+
+
+def reviewers_of(rid: str, ah: str, ai: dict, ai2: dict) -> list[str]:
+    """The models whose verdict on the row as it stands now is on file, first reviewer first."""
+    return [model_name(b[rid]["model"]) for b in (ai, ai2) if b.get(rid, {}).get("h") == ah and b[rid].get("model")]
+
+
 def review_of(rid: str, h: str, ah: str, certs: dict, ai: dict, ai2: dict, res: dict) -> str:
     """"owner" | "ai" | "ai-resolved" | "draft", from mani's shared rule (provisional_evidence.row_state)."""
     st = pe.row_state(rid, h, ah, certs, ai, ai2, res)
@@ -152,7 +168,9 @@ def export(preview: bool) -> int:
         certs, ai, ai2 = load("certification.json"), load("ai-review.json"), load("ai-review-2.json")
         res = load("resolutions.json")
         for s in segs:
-            s["review"] = review_of(s["id"], pe.en_hash(s["en"]), pe.line_hash(s["en"], s["basis"], s["flags"]), certs, ai, ai2, res)
+            ah = pe.line_hash(s["en"], s["basis"], s["flags"])
+            s["review"] = review_of(s["id"], pe.en_hash(s["en"]), ah, certs, ai, ai2, res)
+            s["reviewers"] = reviewers_of(s["id"], ah, ai, ai2) if s["review"] != "draft" or preview else []
             r = res.get(s["id"])
             s["resolution"] = r["note"] if s["review"] == "ai-resolved" and r else None
         n_cert = sum(s["review"] != "draft" for s in segs)
@@ -175,6 +193,7 @@ def export(preview: bool) -> int:
         rows = pe.read_glossary(PROV / f"{tid}.glossary.tsv")
         for g in rows:
             g["review"] = review_of(g["id"], g["h"], g["h"], certs, ai, ai2, res)
+            g["reviewers"] = reviewers_of(g["id"], g["h"], ai, ai2)
             g["resolution"] = res[g["id"]]["note"] if g["review"] == "ai-resolved" else None
             g["words"] = [dict(w, href=tx(w["lesson"], w["a"])) for w in pe.cited_words(lecture, g["cite"]) if w["lines"]] \
                 if lecture else []
@@ -199,6 +218,7 @@ def export(preview: bool) -> int:
             "id": tid, **site, "title_zh": title_zh, "lectures": meta.get("lectures", []),
             "certified": bool(complete), "certified_at": max(dates)[:10] if complete and dates else None,
             "n_segs": len(segs), "n_certified": n_cert, "n_owner": n_owner, "sections": sections,
+            "reviewers": list(dict.fromkeys(r for s in segs for r in s["reviewers"])),
             "guide": [g for g in rows if g["kind"] == "guide"], "glossary": terms,
             "tsv": tsv.read_text(encoding="utf-8"),
         }

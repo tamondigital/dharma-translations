@@ -46,7 +46,9 @@ const VIEWS = [["read", "Read", "Read"], ["bilingual", "Side by side", "Bilingua
   </header>
 
   <div class="notice">
-    <p><strong>An AI translation, following {teacher}'s lectures.</strong> The English was made by AI (Anthropic's Claude), choosing between the readings the Chinese allows as {teacher} reads them in his lectures on this text. A second AI review then checked every line against the Chinese and his own words.{t.n_owner > 0 && <> {t.n_owner} of {t.n_segs} lines have also been reviewed by the project owner.</>} It is not an official translation.</p>
+    <p><strong>An AI translation, following {teacher}'s lectures.</strong> The English was made by AI (Anthropic's Claude), choosing between the readings the Chinese allows as {teacher} reads them in his lectures on this text. {t.reviewers.length > 1
+      ? <>Two AI reviewers from different model families, {t.reviewers.join(" and ")}, then checked every line against the Chinese and his own words.</>
+      : <>A second AI review{t.reviewers.length ? <> by {t.reviewers[0]}</> : null} then checked every line against the Chinese and his own words.</>}{t.n_owner > 0 && <> {t.n_owner} of {t.n_segs} lines have also been reviewed by the project owner.</>} It is not an official translation.</p>
     <p><a href={url("method/")}>How it is made</a> · <a href={url(`files/${t.id}.tsv`)} download>Download (TSV)</a></p>
   </div>
 
@@ -91,7 +93,7 @@ const VIEWS = [["read", "Read", "Read"], ["bilingual", "Side by side", "Bilingua
           <p class="zh" lang="zh-Hant">{g.zh}</p>
           <p class="en"><Parts parts={g.en_parts} /></p>
           <details class="why">
-            <summary>Why this reading <ReviewChip r={g.review} /></summary>
+            <summary>Why this reading <ReviewChip r={g.review} by={g.reviewers} /></summary>
             <dl>
               {g.basis && <><dt>Teacher's reading</dt><dd><Parts parts={g.basis_parts} /></dd></>}
               {g.words.length > 0 && <><dt lang="zh-Hant">法師原話</dt><dd>
