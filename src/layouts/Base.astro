@@ -30,6 +30,8 @@ const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
     {ld && <script type="application/ld+json" set:html={ld} />}
     <link rel="sitemap" href={url("sitemap-index.xml")} />
     <link rel="icon" href={url("favicon.svg")} type="image/svg+xml" />
+    <link rel="icon" href={url("favicon.ico")} sizes="48x48" />
+    <link rel="apple-touch-icon" href={url("apple-touch-icon.png")} />
     <script is:inline>
       try {
         const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t;
