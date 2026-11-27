@@ -29,7 +29,7 @@ npm run preview:dev         # http://localhost:4321/dharma-translations/ with a 
 ## Pages
 
 - `/` texts · `/method/` mani's METHOD.md (links into the private mani repo become plain text)
-- `/<slug>/` one text in three views (`?view=read|bilingual|how`, remembered per browser): Read = the English alone with the reading guide and term notes (a marked term opens its note; the glossary closes the page); Side by side = Chinese beside English per line; How it was made = side by side plus *Why this reading*: the teacher's reading,
+- `/<slug>/` one text in three views (`?view=read|bilingual|how`, remembered per browser): Read = the English alone with the reading guide and term notes (a marked term opens its note; the glossary closes the page); Side by side = Chinese beside English per line; a line the Chinese allows to be read another way carries an "another reading" mark that opens it; How it was made = side by side plus *Why this reading*: the teacher's reading,
   each `NN 行a–b` linked to that line of the lecture transcript on dharma-notes, and the flags
 - `/files/<T-id>.tsv` the source file, CC BY-NC-SA 4.0
 

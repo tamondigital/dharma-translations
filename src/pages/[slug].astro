@@ -91,7 +91,16 @@ const VIEWS = [["read", "Read", "Read"], ["bilingual", "Side by side", "Bilingua
         <div class="seg" id={g.id}>
           <div class="seg-id"><a href={`#${g.id}`}>{g.id}</a></div>
           <p class="zh" lang="zh-Hant">{g.zh}</p>
-          <p class="en"><Parts parts={g.en_parts} /></p>
+          <p class="en"><Parts parts={g.en_parts} />{g.alts.map((a) => <> <a class="alt-mark" href={`#${a.id}`} data-pop={a.id} title={a.label}>another reading</a></>)}</p>
+          {g.alts.map((a) => (
+            <div class="alt" id={a.id}>
+              <p class="alt-h">{a.label}</p>
+              <p class="alt-en">{a.en}</p>
+              <p class="alt-note"><Parts parts={a.note_parts} /></p>
+              {a.resolution && <p class="alt-note alt-res">A reviewer objected; the objection was checked against the sources and answered: {a.resolution}</p>}
+              <p class="g-rev"><ReviewChip r={a.review} by={a.reviewers} /></p>
+            </div>
+          ))}
           <details class="why">
             <summary>Why this reading <ReviewChip r={g.review} by={g.reviewers} /></summary>
             <dl>
@@ -167,9 +176,9 @@ const VIEWS = [["read", "Read", "Read"], ["bilingual", "Side by side", "Bilingua
       const pop = document.getElementById("pop");
       if (!pop.showPopover) return;
       document.addEventListener("click", (e) => {
-        const a = e.target.closest("a.term");
+        const a = e.target.closest("a.term, a.alt-mark");
         if (a) {
-          const entry = document.getElementById("gl-" + a.dataset.term);
+          const entry = document.getElementById(a.dataset.pop || "gl-" + a.dataset.term);
           if (!entry) return;
           e.preventDefault();
           pop.innerHTML = '<button type="button" class="pop-x" aria-label="Close">✕</button>' + entry.innerHTML;

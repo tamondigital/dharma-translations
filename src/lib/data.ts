@@ -13,11 +13,12 @@ export interface Part { t: string; href?: string; term?: string }
 export type Review = "owner" | "ai" | "ai-resolved" | "draft";
 export interface Words { lesson: string; a: number; b: number; lines: { n: number; text: string }[]; href: string }
 export interface NoteRow { lesson: string; quote: string; explanation: string; a: number; b: number; words: { n: number; text: string }[]; href: string | null }
-export interface Seg { id: string; zh: string; en: string; basis: string; flags: string; review: Review; basis_parts: Part[]; flags_parts: Part[]; en_parts: Part[]; words: Words[]; notes: NoteRow[]; resolution: string | null; reviewers: string[] }
+export interface Seg { id: string; zh: string; en: string; basis: string; flags: string; review: Review; basis_parts: Part[]; flags_parts: Part[]; en_parts: Part[]; words: Words[]; notes: NoteRow[]; resolution: string | null; reviewers: string[]; alts: Alt[] }
 export interface Gloss {
-  id: string; kind: "guide" | "term"; zh: string; term: string; sense: string; defined: string; defined_first: string | null;
+  id: string; kind: "guide" | "term" | "reading"; zh: string; term: string; sense: string; defined: string; defined_first: string | null;
   teacher: string[]; cite: string; cite_parts: Part[]; flags: string; flags_parts: Part[]; review: Review; first_seg?: string; words: Words[]; resolution: string | null; reviewers: string[];
 }
+export interface Alt { id: string; label: string; en: string; note_parts: Part[]; review: Review; reviewers: string[]; resolution: string | null }
 export interface Section { start: string; en: string; zh: string; segs: Seg[] }
 export interface Lecture { teacher: string; channel: string; playlist: string }
 export interface Text {

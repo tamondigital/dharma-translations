@@ -205,6 +205,14 @@ def export(preview: bool) -> int:
         print(f"{tid}: {sum(g['review'] != 'draft' for g in rows)} cleared glossary/guide row(s) exported"
               + (f", {sum(g['review'] == 'draft' for g in rows)} draft (preview)" if preview else ""))
         terms = [g for g in rows if g["kind"] == "term"]
+        alts = {}
+        for g in rows:
+            if g["kind"] == "reading":
+                alts.setdefault(g["defined"], []).append({
+                    "id": g["id"], "label": g["term"], "en": g["sense"], "note_parts": g["flags_parts"],
+                    "review": g["review"], "reviewers": g["reviewers"], "resolution": g["resolution"]})
+        for s_ in segs:
+            s_["alts"] = alts.get(s_["id"], [])
         attach_terms(segs, terms)
         sections, by_start, cur = [], {x["start"]: x for x in meta.get("sections", [])}, None
         for s in segs:

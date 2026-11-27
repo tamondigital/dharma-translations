@@ -117,3 +117,18 @@ a.term:hover { color: var(--accent); }
 .prose table { border-collapse: collapse; display: block; overflow-x: auto; font-size: .92rem; }
 .prose th, .prose td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
 .prose code { background: var(--surface-2); padding: 0 4px; border-radius: 4px; }
+
+/* another reading of a line: a mark in Read and Side by side (opens the note), the note itself under the line in How */
+.alt-mark { font-family: var(--sans); font-size: .72rem; letter-spacing: .02em; white-space: nowrap; color: var(--accent);
+  border: 1px solid var(--accent-soft); border-radius: 99px; padding: 1px 8px; vertical-align: .15em; text-decoration: none; }
+.alt-mark:hover { background: var(--accent-soft); text-decoration: none; }
+.alt { grid-column: 2 / -1; display: none; margin: 4px 0; padding: 10px 14px; border-left: 3px solid var(--accent-soft);
+  background: var(--surface); border-radius: 0 8px 8px 0; font-size: .95rem; }
+#text[data-view="how"] .alt { display: block; }
+#text[data-view="how"] .alt-mark { display: none; }
+.alt-h { margin: 0 0 4px; font-family: var(--sans); font-size: .8rem; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; }
+.alt-en { margin: 0 0 6px; font-family: var(--serif-latin); font-size: 1.02rem; }
+.alt-note { margin: 0 0 6px; color: var(--ink-2); font-size: .88rem; }
+.pop .alt-h { font-size: .85rem; }
+.pop .alt-res { display: none; }
+@media (max-width: 720px) { .alt { grid-column: 1; } }

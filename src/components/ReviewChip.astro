@@ -7,7 +7,7 @@ const label = {
   owner: "Reviewed by the project owner",
   ai: `Checked by ${who}`,
   "ai-resolved": `Checked by ${who} · an objection answered from the sources`,
-  draft: "Draft: not yet checked",
+  draft: "⚠ Attention: not yet checked",
 }[r];
 ---
 <span class={`chip chip-${r === "ai-resolved" ? "ai" : r}`}>{label}</span>

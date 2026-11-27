@@ -40,7 +40,7 @@ const ld = jsonld && JSON.stringify(jsonld).replace(/</g, "\\u003c");
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
-    {preview && <div class="preview-bar" role="status">Local preview: includes lines not yet checked (marked Draft). This build is never deployed.</div>}
+    {preview && <div class="preview-bar" role="status">Local preview: includes lines not yet checked (marked ⚠ Attention). This build is never deployed.</div>}
     <header class="site-head">
       <div class="site-head-inner">
         <a class="brand" href={url("/")}>{site.title}</a>
