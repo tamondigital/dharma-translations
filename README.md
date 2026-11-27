@@ -12,11 +12,13 @@ npm run export              # mani → content/: only texts whose every line is 
 npm run build               # → dist/, to check locally
 git add content && git commit -m "export: <T-id>" -- content
 git push
-gh workflow run deploy.yml  # manual until the first public deploy is approved; then deploys run on push
+gh workflow run deploy.yml  # a manual redeploy; every push to main deploys on its own
 ```
 
-Publishing is the owner's decision: a text reaches `content/` only once every line is marked certified in the
-mani webui 譯經 tab and `review/<T-id>/certification.json` is committed there. A text also needs an entry in
+Publishing is the owner's decision, and every push to `main` deploys, so push only what the owner has approved.
+A text reaches `content/` only once every line is cleared in mani: certified by the owner in the webui 譯經 tab
+(`review/<T-id>/certification.json`), passed by the AI reviewers (both, once a text has a second review), or its
+flags answered in writing (`review/<T-id>/resolutions.json`) — and unchanged since. A text also needs an entry in
 `site.config.json` → `texts` (URL slug, English title, pinyin, author).
 
 ## Preview (local only)
