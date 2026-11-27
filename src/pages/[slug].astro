@@ -111,6 +111,7 @@ const VIEWS = [["read", "Read", "Read"], ["bilingual", "Side by side", "Bilingua
                   </div>
                 ))}</dd></>}
               {g.flags && <><dt>Notes</dt><dd class={g.flags.includes("⚠") ? "flag" : undefined}><Parts parts={g.flags_parts} /></dd></>}
+              {g.resolution && <><dt>Review</dt><dd>A reviewer objected; the objection was checked against the sources and answered: {g.resolution}</dd></>}
               {!g.basis && !g.words.length && !g.notes.length && <><dt>Teacher's reading</dt><dd class="muted">None needed: the Chinese allows one reading here.</dd></>}
             </dl>
           </details>
